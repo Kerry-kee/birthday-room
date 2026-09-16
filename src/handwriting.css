@@ -1,0 +1,41 @@
+/* Birthday Hand is the locally bundled 小可奶酪体 (ZQKNLT). */
+:root{--hand-font:'Birthday Hand','STXingkai','KaiTi',cursive}
+@media(max-width:1250px){.immersive .interaction-prompt{bottom:174px}}
+@media(max-width:700px){.immersive .interaction-prompt{left:22px;bottom:182px;max-width:calc(100vw - 44px)}}
+@media(pointer:coarse){.immersive .interaction-prompt{bottom:226px}}
+@media(max-height:550px){.immersive .interaction-prompt{bottom:94px;max-width:calc(100vw - 44px)}}
+@media(pointer:coarse) and (max-height:550px){.immersive .interaction-prompt{bottom:200px}}
+.is-revealing .fps-header,.is-revealing .fps-toolbar,.is-revealing .explore-status,.is-revealing .walk-guide,.is-revealing .touch-controls,.is-revealing .touch-interact,.is-revealing .interaction-prompt,.is-revealing .crosshair,.is-revealing .now-playing{opacity:0;pointer-events:none}
+.cake-reveal-caption{position:absolute;bottom:10%;left:15px;right:15px;text-align:center;color:#ffe6bd;pointer-events:none;z-index:8;text-shadow:0 2px 12px #24180f;font-size:29px}.cake-reveal-caption p{font-size:21px;margin-top:12px}
+.candle-night .fps-header,.candle-night .fps-toolbar,.candle-night .explore-status,.candle-night .walk-guide{background:#3b3027e8;border-color:#a38a62;color:#e9cba0}
+.candle-night .brand,.candle-night .header-note,.candle-night .top-button,.candle-night .icon-button{color:#efd3a6}
+.immersive .dialog.candle-wish{position:fixed;left:auto;right:30px;width:350px;padding:26px;background:#30251feF;color:#f6d7a9;border-color:#bd925c;box-shadow:0 8px 40px #130d0860}
+.candle-wish::backdrop{background:#00000008;backdrop-filter:none}.immersive .dialog.candle-wish h2{font-size:29px;color:#ffe1b0}.immersive .dialog.candle-wish>p{font-size:20px;color:#e5c799}.candle-wish .dialog-icon{display:none}.candle-wish .birthday-player{background:#493b2c;border-color:#95774e;color:#f5d59f}.candle-wish .birthday-player small{color:#d0b58e}.candle-wish .dialog-eyebrow{color:#c9b08c}.candle-wish .close-button{color:#e8c796}
+@media(max-width:700px){.immersive .dialog.candle-wish{left:12px;right:12px;top:auto;bottom:14px;width:auto;max-height:48dvh;padding:18px}.immersive .dialog.candle-wish h2{font-size:26px;margin:10px 0}.immersive .dialog.candle-wish>p{font-size:18px;margin:10px 0}.candle-wish .birthday-player{margin-top:10px}.cake-reveal-caption{font-size:24px;bottom:8%}.cake-reveal-caption p{font-size:18px}}
+.immersive,.immersive button,.immersive input,.immersive kbd,.immersive .entry-card h1,.immersive .dialog h2,.immersive .clock-reading,.immersive .code-input,.immersive .final-signature,.immersive .gift-from{font-family:var(--hand-font);font-weight:400}
+.immersive .brand{font-size:26px}.immersive .brand small{font-size:11px;letter-spacing:1px}
+.immersive .header-note{font-size:17px}.immersive .top-button,.immersive .fps-toolbar .top-button{font-size:18px}
+.immersive .collection-toggle b{font-size:17px}.immersive .entry-eyebrow{font-size:18px;letter-spacing:1px}
+.immersive .entry-card{width:315px}.immersive .entry-card h1{font-size:48px;line-height:1.25;font-weight:400}
+.immersive .entry-card p{font-size:21px;line-height:1.6}.immersive .entry-help{font-size:15px;line-height:1.4}
+.immersive .primary,.immersive .secondary{font-family:var(--hand-font);font-size:21px;font-weight:400}
+.immersive .room-pill{font-size:20px}.immersive .explore-status p{font-size:17px;margin:7px 0 0}
+.immersive .walk-guide,.immersive kbd{font-size:16px}.immersive .walk-guide{gap:12px}
+.immersive .interaction-prompt,.immersive .interaction-prompt>span,.immersive .hotspot-label{font-size:19px}
+.immersive .toast{font-size:20px;line-height:1.6}.immersive .dialog{width:min(510px,calc(100vw - 32px))}
+.immersive .dialog h2{font-size:36px;font-weight:400;line-height:1.4}.immersive .dialog>p,.immersive .help-list p{font-size:21px;line-height:1.65}
+.immersive .dialog-eyebrow{font-size:17px;letter-spacing:1px}.immersive .gift-message{font-size:23px!important;line-height:1.7!important}
+.immersive .gift-detail{font-size:18px!important}.immersive .gift-from{font-size:20px}.immersive .final-signature{font-size:27px!important}.immersive .final-signature span{font-size:19px}
+.immersive .pocket-list b,.immersive .pocket-list small{font-size:20px}.immersive .pocket-list small{font-size:17px;margin-top:3px}
+.immersive .puzzle-progress,.immersive .journal-items span,.immersive .journal-note p{font-size:19px}.immersive .journal-note h3{font-size:23px;font-weight:400}
+.immersive .clue-copy{font-size:23px!important;line-height:1.7!important}.immersive .puzzle-caption{font-size:19px!important;line-height:1.6}
+.immersive .book-puzzle button{font-size:21px}.immersive .book-puzzle small{font-size:17px}.immersive .code-label{font-size:20px}
+.immersive .code-input{font-size:40px}.immersive .text-action,.immersive .item-requirement,.immersive .sequence-readout{font-size:19px}
+.immersive .music-puzzle button{font-size:23px}.immersive .music-puzzle small{font-size:18px}.immersive .puzzle-feedback{font-size:21px!important;line-height:1.6}
+.immersive .postcard-colors span{font-size:24px}.immersive .touch-interact{font-size:17px}
+.birthday-player{display:flex;align-items:center;gap:11px;text-align:left;background:#eef2df;border:1.5px solid #a5b18e;border-radius:10px;padding:12px 14px;margin:20px 0 8px;color:#64734f}
+.birthday-player>span{flex:1;font-size:20px;line-height:1.2}.birthday-player small{display:block;font-size:16px;color:#869071;margin-top:6px}
+.birthday-player button{border:1px solid #85946e;border-radius:7px;padding:6px 10px;background:#fffbed;font-size:19px!important;color:#566743;min-width:55px}
+.now-playing{position:absolute;top:120px;right:35px;display:flex;align-items:center;gap:9px;padding:10px 15px;background:#fffbed;border:1.5px solid #647151;border-radius:11px;color:#647151;font-size:20px;z-index:5;pointer-events:none}
+@media(max-width:1250px){.immersive .walk-guide{bottom:108px}.immersive .fps-toolbar{left:30px;right:auto}}
+@media(max-width:700px){.immersive .fps-header .brand{font-size:22px}.immersive .fps-header .brand small{font-size:9px}.immersive .entry-card{width:278px}.immersive .entry-card h1{font-size:42px}.immersive .entry-card p{font-size:20px}.immersive .entry-help{font-size:14px}.immersive .fps-toolbar{left:15px;right:15px}.immersive .fps-toolbar .top-button{font-size:16px;padding:8px 5px;gap:5px}.immersive .fps-toolbar .collection-toggle>span{display:none}.immersive .collection-toggle b{font-size:16px;padding-left:6px}.immersive .dialog h2{font-size:31px}.immersive .dialog>p{font-size:20px}.immersive .gift-message,.immersive .clue-copy{font-size:21px!important}.immersive .toast{font-size:19px}.immersive .interaction-prompt,.immersive .interaction-prompt>span{font-size:17px}.immersive .room-pill{font-size:19px}.immersive .explore-status p{font-size:16px}.now-playing{top:190px;left:25px;right:auto;font-size:18px;padding:9px 12px}.birthday-player{padding:10px;gap:8px}.birthday-player>span{font-size:19px}}

@@ -1,0 +1,16 @@
+/* Flat colors and ink edges carry through from the toon room to the interface. */
+.immersive{--ink:#4c5142;--paper:#fffbed;font-family:'Microsoft YaHei','PingFang SC',sans-serif}
+.immersive .fps-header,.immersive .entry-card,.immersive .fps-toolbar,.immersive .explore-status{background:#fffbed;border:2px solid var(--ink);box-shadow:3px 4px 0 #4c514225;border-radius:12px 17px 11px 15px}
+.immersive .brand-mark{border:1.5px solid #61704e;background:#dce6c2;border-radius:10px 13px 9px 12px}
+.immersive .entry-card h1,.immersive .dialog h2{font-family:'KaiTi','STKaiti','Microsoft YaHei',serif;font-weight:600;color:#434d3b}
+.immersive .primary{background:#aabc8b;border:2px solid #4f5c40;color:#35432d;box-shadow:3px 3px 0 #4f5c40;border-radius:9px 12px 9px 11px;font-weight:500}
+.immersive .primary:hover{background:#bbcda0;transform:translateY(-1px)}.immersive .primary:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #4f5c40}
+.immersive .dialog{border:2px solid #4c5142;background:#fffbed;box-shadow:6px 7px 0 #4c51424d;border-radius:17px 23px 16px 20px}
+.immersive .dialog::backdrop{background:#3b463955;backdrop-filter:none}.immersive .view-shade{background:none}
+.immersive .top-button,.immersive .secondary{border:1px solid #a3aa8b;background:#f1f3df}.immersive .fps-toolbar .top-button{border:0;background:none}
+.immersive .interaction-prompt,.immersive .toast{background:#fffbed;border:1.5px solid #5b644c;box-shadow:2px 3px 0 #4c51422b;border-radius:8px 11px 7px 10px}
+.immersive .hotspot-core{border:1.5px solid #576348;background:#fff7d8;color:#5c694a;box-shadow:2px 2px 0 #4c514233}
+.immersive .walk-guide{color:#46503b;text-shadow:none;background:#fffbed;border:1.5px solid #667157;padding:10px 12px;border-radius:8px}
+.immersive .crosshair{background:#fffbed;box-shadow:0 0 0 1.5px #4c5142}.immersive .touch-controls button,.immersive .touch-interact{background:#fffbed;border:2px solid #5b664b;box-shadow:2px 2px 0 #5b664b33}
+.immersive .book-puzzle button,.immersive .music-puzzle button,.immersive .postcard-colors span{border:1.5px solid #596149}.immersive .pocket-list button{border:1px solid #b0b692;background:#eff2de}
+@media(max-width:700px){.immersive .fps-toolbar{box-shadow:2px 3px 0 #4c514222}.immersive .walk-guide{display:none}}

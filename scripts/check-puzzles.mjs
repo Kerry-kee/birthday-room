@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {emptyPuzzles,attemptPuzzle,normalizePuzzles} from '../src/puzzles.js';
+import {canStand,movePlayer,SPAWN} from '../src/walking.js';
+let state=emptyPuzzles();
+for(const id of ['sofa','plant','music'])assert.equal(attemptPuzzle(state,id,['SOL','MI','DO']).success,false);
+assert.equal(attemptPuzzle(state,'drawer','000').success,false);
+assert.equal(attemptPuzzle(state,'books',['pink','green','gold']).success,false);
+state=attemptPuzzle(state,'postcard').state;
+state=attemptPuzzle(state,'books',['green','gold','pink']).state;
+assert(state.items.includes('record'));assert(state.clues.includes('record'));
+state=attemptPuzzle(state,'wateringCan').state;
+state=attemptPuzzle(state,'plant').state;assert(state.items.includes('key'));
+state=attemptPuzzle(state,'sofa').state;
+state=attemptPuzzle(state,'clock').state;
+state=attemptPuzzle(state,'drawer','420').state;
+assert.equal(attemptPuzzle(state,'music',['DO','MI','SOL']).success,false);
+state=attemptPuzzle(state,'music',['SOL','MI','DO']).state;
+assert.equal(state.solved.length,5);
+assert.deepEqual(attemptPuzzle(state,'plant').state,state,'Repeated interactions must not duplicate rewards');
+assert.deepEqual(normalizePuzzles(JSON.parse(JSON.stringify(state))),state);
+assert.deepEqual(normalizePuzzles(null),emptyPuzzles());
+assert(canStand(SPAWN.x,SPAWN.z));assert(!canStand(-4.65,-1.25));assert(!canStand(4.65,-1));assert(!canStand(3.35,4.65));
+const wall={x:2,z:0};movePlayer(wall,20,0);assert(wall.x<=5.86);
+const table={x:.25,z:2.7};movePlayer(table,0,-7);assert(table.z>=1.73);
+const reachable=new Set(),queue=[[15,44]];
+while(queue.length){const [x,z]=queue.pop(),key=`${x},${z}`;if(reachable.has(key)||!canStand(x/10,z/10))continue;reachable.add(key);for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]])queue.push([x+dx,z+dz]);}
+for(const [x,z] of [[28,35],[30,2],[46,-33],[11,-32],[-25,-38],[-29,-10],[-29,25]])assert(reachable.has(`${x},${z}`),`Unreachable clue or puzzle: ${x},${z}`);
+console.log('PASS: five puzzle chains, wrong answers, required items, reward idempotence, persistence, collision, enlarged-room reachability.');
