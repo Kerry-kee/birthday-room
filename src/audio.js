@@ -43,6 +43,7 @@ export function createAudio({ onState = () => {} } = {}) {
     }
   }
   function stop(){generation++;clear();playing=false;publish();}
+  const visibility=()=>{if(document.hidden)stop();};document.addEventListener('visibilitychange',visibility);
   return {
     start:()=>play(track),
     playBirthday:()=>play('birthday'),
@@ -51,6 +52,6 @@ export function createAudio({ onState = () => {} } = {}) {
     chime(){if(playing&&track!=='birthday')[523.25,659.25,783.99].forEach((n,i)=>note(n,1.2,i*.12));},
     tone(name){if(playing&&track!=='birthday')note(({DO:523.25,MI:659.25,SOL:783.99})[name]||523.25,.8);},
     getState:()=>({playing,track,voiceCount:voices.size}),
-    dispose(){disposed=true;generation++;clear();if(ctx)ctx.close().catch(()=>{});},
+    dispose(){disposed=true;generation++;clear();document.removeEventListener('visibilitychange',visibility);if(ctx)ctx.close().catch(()=>{});},
   };
 }

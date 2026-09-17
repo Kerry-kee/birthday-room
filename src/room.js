@@ -1,17 +1,20 @@
 import * as THREE from 'three';
 import { createFirstPerson } from './first-person';
+import { gamePoint } from './landscape';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+import { batchSurfaces } from './minitool-gpu';
 
 export function createRoom(container, { onSelect, onReady, onError, onMode, onFocus, onLights, markerElements, reducedMotion }) {
   const scene = new THREE.Scene();
+  const offline=import.meta.env.MODE==='minitool';
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, offline?1.5:2));
   renderer.shadowMap.enabled = false;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping;
-  const inkEffect=new OutlineEffect(renderer,{defaultThickness:.0033,defaultColor:[.04,.05,.03],defaultAlpha:1});
+  const inkEffect=offline?null:new OutlineEffect(renderer,{defaultThickness:.0033,defaultColor:[.04,.05,.03],defaultAlpha:1});
   const shadeRamp=new THREE.DataTexture(new Uint8Array([185,230,255]),3,1,THREE.RedFormat);
   shadeRamp.minFilter=shadeRamp.magFilter=THREE.NearestFilter;shadeRamp.needsUpdate=true;
   container.prepend(renderer.domElement);
@@ -30,9 +33,9 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
   const mat = color => { if(!materials.has(color)) materials.set(color,new THREE.MeshToonMaterial({color,gradientMap:shadeRamp})); return materials.get(color); };
   const root = new THREE.Group(); scene.add(root);
   function mesh(geo,color,x,y,z,parent=root) { const m=new THREE.Mesh(geo, typeof color === 'string' ? mat(color) : color); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; parent.add(m); return m; }
-  function box(w,h,d,color,x,y,z,r=.05,parent=root) { return mesh(r ? new RoundedBoxGeometry(w,h,d,2,r) : new THREE.BoxGeometry(w,h,d),color,x,y,z,parent); }
-  function ball(r,color,x,y,z,parent=root) { return mesh(new THREE.SphereGeometry(r,24,16),color,x,y,z,parent); }
-  function cyl(rt,rb,h,color,x,y,z,parent=root) { return mesh(new THREE.CylinderGeometry(rt,rb,h,40),color,x,y,z,parent); }
+  function box(w,h,d,color,x,y,z,r=.05,parent=root) { return mesh(r && (!offline||r>.015) ? new RoundedBoxGeometry(w,h,d,offline?1:2,r) : new THREE.BoxGeometry(w,h,d),color,x,y,z,parent); }
+  function ball(r,color,x,y,z,parent=root) { return mesh(new THREE.SphereGeometry(r,offline?12:24,offline?8:16),color,x,y,z,parent); }
+  function cyl(rt,rb,h,color,x,y,z,parent=root) { return mesh(new THREE.CylinderGeometry(rt,rb,h,offline?16:40),color,x,y,z,parent); }
   function group(x,y,z,rotation=0) { const g = new THREE.Group(); g.position.set(x,y,z);g.rotation.y=rotation;root.add(g); return g; }
   function line(points,color,r=.018,parent=root) { return mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,r,6,false),color,0,0,0,parent); }
   const targets = {}, anchors = {}, animations = [];
@@ -264,7 +267,7 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
     const canvas=document.createElement('canvas');canvas.width=768;canvas.height=256;const ctx=canvas.getContext('2d');
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
     const draw=()=>{if(disposed)return;ctx.fillStyle='#f7f0db';ctx.fillRect(0,0,768,256);ctx.fillStyle='#737d5d';ctx.font='62px "Birthday Hand", KaiTi, cursive';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(textValue,384,128,720);texture.needsUpdate=true;};
-    document.fonts.load('62px "Birthday Hand"',textValue).then(draw).catch(draw);
+    if(document.fonts&&document.fonts.load)document.fonts.load('62px "Birthday Hand"',textValue).then(draw).catch(draw);else Promise.resolve().then(draw);
     const tile=mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:texture,roughness:1,side:THREE.DoubleSide}),x,y,z);tile.rotation.y=rotation;return tile;
   }
   textTile('阅读角 · 把一天排成一列',2.3,.7,5.98,3.62,-1,-Math.PI/2);
@@ -299,6 +302,13 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
   const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#fff3c5',size:.025,transparent:true,opacity:.65}));root.add(dust);
   const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(),reach=3.15;
   let disposed=false,frame,paused=false,focus='',lastPose=0,recordPlaying=false;
+  let quality=0,slowTime=0,sampleTime=0,sampleFrames=0,contextLost=false,hiddenAt=0;
+  if(offline){
+    root.traverse(o=>{if(o.isMesh)o.layers.enable(1);});raycaster.layers.set(1);
+    const movers=[cake,cakeCover,can,windowPlant,record,recordLabel,sofaLock,cat,rocker,...puzzleBooks,...drawerParts,...animations.map(a=>a.g)];
+    for(const g of [cake,can,windowPlant,cat,...animations.map(a=>a.g)])batchSurfaces(g,new Set(),shadeRamp);
+    batchSurfaces(root,new Set(movers),shadeRamp);
+  }
   let lightsOn=true,lightBlend=1,cakeOpened=false,candleBlown=false,reveal=null;
   const smooth=value=>{const n=THREE.MathUtils.clamp(value,0,1);return n*n*(3-2*n);};
   function setLights(value){lightsOn=value;rocker.rotation.x=value?-.18:.18;switchDot.material.color.set(value?'#d2e59b':'#b8a585');renderer.domElement.dataset.lightsOn=String(value);onLights?.(value);}
@@ -307,10 +317,10 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
   setLights(true);setCakeOpened(false);
   const visibleMarkers=new Set();
   // Dust is visual only; solid meshes block interactions through walls and furniture.
-  const solids=[];root.traverse(o=>{if(o.isMesh&&!o.userData.moonPool)solids.push(o);});
+  const solids=[];root.traverse(o=>{if(o.isMesh&&!o.userData.moonPool&&!o.userData.minitoolBatch)solids.push(o);});
   function hitAt(e) {
     pointer.set(0,0);
-    if(e){const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);}
+    if(e){const p=gamePoint(renderer.domElement,e);pointer.set(p.x/p.width*2-1,-p.y/p.height*2+1);}
     raycaster.setFromCamera(pointer,camera);
     return raycaster.intersectObjects(solids,false).find(visibleHit);
   }
@@ -323,12 +333,15 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
   }
   function interact(e){if(paused)return;const id=selectionAt(e);if(id)onSelect(id);}
   const controls=createFirstPerson(camera,renderer.domElement,{onInteract:interact,onMode});
-  const lost=e=>{e.preventDefault();onError('3D 画面暂时中断了。请刷新页面，已找到的礼物会保留。');};renderer.domElement.addEventListener('webglcontextlost',lost);
-  function resize(){const {width:w,height:h}=container.getBoundingClientRect();renderer.setSize(w,h);camera.aspect=w/Math.max(h,1);camera.fov=w<600?78:70;camera.updateProjectionMatrix();}
-  const observer=new ResizeObserver(resize);observer.observe(container);resize();
+  const lost=e=>{e.preventDefault();contextLost=true;cancelAnimationFrame(frame);onError('3D 画面暂时中断了。已找到的礼物会保留，可继续轻量探索。');};renderer.domElement.addEventListener('webglcontextlost',lost);
+  const restored=()=>{contextLost=false;onError('图形环境已恢复，可以重新加载，或继续轻量探索。');};renderer.domElement.addEventListener('webglcontextrestored',restored);
+  function resize(){const w=container.clientWidth,h=container.clientHeight;if(offline)renderer.setPixelRatio(Math.min(devicePixelRatio,quality?1:1.5,Math.sqrt((quality?1000000:2000000)/Math.max(w*h,1))));renderer.setSize(w,h);camera.aspect=w/Math.max(h,1);camera.fov=w<600?78:70;camera.updateProjectionMatrix();}
+  const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(resize):{observe(){window.addEventListener('resize',resize);},disconnect(){window.removeEventListener('resize',resize);}};observer.observe(container);resize();
   const start=performance.now();let previous=start;
+  const visibility=()=>{if(document.hidden){hiddenAt=performance.now();cancelAnimationFrame(frame);}else if(!disposed&&!contextLost){previous=performance.now();if(reveal&&hiddenAt)reveal.start+=previous-hiddenAt;hiddenAt=0;sampleTime=sampleFrames=slowTime=0;frame=requestAnimationFrame(render);}};document.addEventListener('visibilitychange',visibility);
   function render(now) {
-    if(disposed)return;frame=requestAnimationFrame(render);const t=(now-start)/1000,dt=Math.min((now-previous)/1000,.05);
+    if(disposed||contextLost||document.hidden)return;frame=requestAnimationFrame(render);const elapsed=(now-previous)/1000,t=(now-start)/1000,dt=Math.min(elapsed,.05);
+    if(offline){sampleTime+=elapsed;sampleFrames++;if(sampleTime>=3){const fps=sampleFrames/sampleTime;slowTime=fps<24?slowTime+sampleTime:0;sampleTime=sampleFrames=0;if(slowTime>=3&&quality===0){quality=1;slowTime=0;dust.visible=false;animations.forEach(a=>a.g.visible=false);resize();}else if(slowTime>=6&&quality===1){cancelAnimationFrame(frame);onError('当前图形性能较低，已切换到轻量探索。');return;}}}
     controls.update(dt);previous=now;
     if(reveal){
       const progress=Math.min(1,(now-reveal.start)/reveal.duration),lift=smooth(progress/.48),unfold=smooth((progress-.2)/.55),fade=smooth((progress-.58)/.35);
@@ -348,11 +361,11 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
     candleLight.intensity=candleActive?5.5*(reducedMotion?1:1+Math.sin(t*8)*.035+Math.sin(t*13)*.025):0;
     candleGlow.visible=flame.visible=candleActive;dust.material.opacity=.65*lightBlend;
     renderer.domElement.dataset.candleLit=String(candleActive);renderer.domElement.dataset.lightLevel=lightBlend.toFixed(3);
-    if(recordPlaying&&!reducedMotion){record.rotation.y+=dt*1.65;recordLabel.rotation.y=record.rotation.y;}
+    if(recordPlaying&&!reducedMotion&&!quality){record.rotation.y+=dt*1.65;recordLabel.rotation.y=record.rotation.y;}
     const blend=reducedMotion?1:.13;
     for(const [i,part] of drawerParts.entries()){const destination=(i===0?.44:.51)+(puzzleVisual.solved.includes('drawer')?.34:0);part.position.z+=(destination-part.position.z)*blend;}
     for(const [i,book] of puzzleBooks.entries()){book.rotation.z+=((puzzleVisual.solved.includes('books')?-.14-i*.05:0)-book.rotation.z)*blend;}
-    if(!reducedMotion) {animations.forEach(({g,y,phase})=>{g.position.y=y+Math.sin(t*1.3+phase)*.055;g.rotation.z=Math.sin(t*.8+phase)*.025;});cat.scale.y=1+Math.sin(t*1.6)*.018;flame.scale.y=1.4+Math.sin(t*9)*.18;dust.rotation.y=t*.006;}
+    if(!reducedMotion&&!quality) {animations.forEach(({g,y,phase})=>{g.position.y=y+Math.sin(t*1.3+phase)*.055;g.rotation.z=Math.sin(t*.8+phase)*.025;});cat.scale.y=1+Math.sin(t*1.6)*.018;flame.scale.y=1.4+Math.sin(t*9)*.18;dust.rotation.y=t*.006;}
     scene.updateMatrixWorld();
     visibleMarkers.clear();
     Object.entries(anchors).forEach(([id,pos])=>{
@@ -366,9 +379,10 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
     const id=paused?'':selectionAt();
     if(focus!==id){focus=id;onFocus(id);}
     if(import.meta.env.DEV && now-lastPose>100){renderer.domElement.dataset.pose=JSON.stringify(controls.getState());lastPose=now;}
-    inkEffect.render(scene,camera);
+    if(inkEffect)inkEffect.render(scene,camera);else renderer.render(scene,camera);
+    if(offline&&now-lastPose>500){renderer.domElement.dataset.gpu=JSON.stringify({quality,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixels:renderer.domElement.width*renderer.domElement.height,textures:renderer.info.memory.textures});lastPose=now;}
   }
-  frame=requestAnimationFrame(render);onReady();
+  if(offline){renderer.debug.onShaderError=()=>{contextLost=true;cancelAnimationFrame(frame);onError('画面暂时无法显示，正在切换轻量探索。');};renderer.compile(scene,camera);}frame=requestAnimationFrame(render);onReady();
   return {
     enter:()=>{if(!reveal)controls.enter();},
     resetView:()=>{if(!reveal)controls.reset();},
@@ -383,6 +397,6 @@ export function createRoom(container, { onSelect, onReady, onError, onMode, onFo
     revealCake(){if(reveal)return reveal.promise;setLights(false);candleBlown=false;if(cakeOpened)return Promise.resolve(true);let resolve;const promise=new Promise(done=>resolve=done);reveal={start:performance.now(),duration:reducedMotion?150:3600,resolve,promise};renderer.domElement.dataset.revealing='true';return promise;},
     celebrate:()=>{candleBlown=true;setLights(true);},
     reset:()=>{if(reveal){reveal.resolve(false);reveal=null;}renderer.domElement.dataset.revealing='false';setCakeOpened(false);candleBlown=false;cake.scale.setScalar(1);cakeLid.position.y=.94;cakeLid.rotation.set(0,0,0);coverPanels.forEach(({hinge})=>hinge.rotation.set(0,0,0));coverPaper.opacity=coverRibbon.opacity=1;setLights(true);recordPlaying=false;record.rotation.y=0;recordLabel.rotation.y=0;controls.reset();},
-    dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',lost);const geos=new Set(),mats=new Set();scene.traverse(o=>{if(o.geometry)geos.add(o.geometry);if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});geos.forEach(g=>g.dispose());mats.forEach(m=>{m.map?.dispose();m.dispose();});renderer.dispose();renderer.domElement.remove();},
+    dispose:()=>{if(disposed)return;disposed=true;if(reveal){reveal.resolve(false);reveal=null;}cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('webglcontextrestored',restored);document.removeEventListener('visibilitychange',visibility);shadeRamp.dispose();const geos=new Set(),mats=new Set();scene.traverse(o=>{if(o.geometry)geos.add(o.geometry);if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});geos.forEach(g=>g.dispose());mats.forEach(m=>{m.map?.dispose();m.dispose();});renderer.dispose();renderer.domElement.remove();},
   };
 }

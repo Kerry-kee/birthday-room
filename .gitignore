@@ -5,3 +5,6 @@ test-results/
 .env
 .env.*
 !.env.example
+artifacts/
+output/
+.codex/

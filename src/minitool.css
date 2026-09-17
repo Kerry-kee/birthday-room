@@ -1,0 +1,17 @@
+html,body,#root{height:100%;min-height:0}
+html{touch-action:manipulation}body{-webkit-touch-callout:none}
+.minitool .immersive.app-shell{height:100vh;height:var(--app-height,100vh)}
+.minitool .dialog,.minitool .orientation-guide{max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);max-height:calc(var(--app-height,100vh) - 24px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.minitool button:focus,.minitool a:focus,.minitool input:focus{outline:2px solid #b08d4f;outline-offset:3px}
+.minitool .capture-button{display:none!important}
+.minitool .birthday-player>span,.minitool .pocket-list button>span{min-width:0}
+.no-flex-gap [data-mt-flex=row]>*+*{margin-left:var(--mt-column-gap,0px)}
+.no-flex-gap [data-mt-flex=column]>*+*{margin-top:var(--mt-row-gap,0px)}
+.mt-dialog-backdrop{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(36,33,24,.35)}
+.mt-dialog-fallback[open]{display:block;position:fixed;top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);margin:0}
+.mt-modal-open .fps-header,.mt-modal-open .fps-toolbar,.mt-modal-open .touch-controls,.mt-modal-open .touch-interact{pointer-events:none}
+.flat-room{position:absolute;top:105px;bottom:100px;left:25px;right:25px;overflow-y:auto;padding:20px;background:#f6eed9;border:2px solid #83936a;border-radius:18px;color:#5a664d;z-index:3}
+.flat-room h2{font-size:28px;font-weight:400;margin:0 0 10px}.flat-room p{font-size:18px;line-height:1.5;margin:8px 0 16px}.flat-room-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-gap:10px}.flat-room-grid button{padding:15px;background:#e0e7cb;border:1px solid #8d9f74;border-radius:10px;font-size:19px;min-width:0}.flat-room-grid button:active{background:#c6d3af}
+.flat-exploration .explore-status,.flat-exploration .crosshair,.flat-exploration .interaction-prompt,.flat-exploration .touch-controls,.flat-exploration .touch-interact,.flat-exploration .walk-guide{display:none!important}
+.flat-exploration.candle-night .flat-room{background:#353b49;color:#f2dcb4}.flat-exploration.candle-night .flat-room-grid button{background:#606951;color:#fff0cd}
+@media(max-height:600px){.flat-room{top:68px;bottom:76px;padding:14px}.flat-room h2{font-size:22px}.flat-room p{font-size:16px}.flat-room-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-gap:7px}.flat-room-grid button{font-size:17px;padding:10px}}

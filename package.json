@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "preview": "vite preview --host 127.0.0.1" },
+  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "preview": "vite preview --host 127.0.0.1", "build:minitool": "node scripts/build-minitool.mjs", "check:minitool": "node scripts/check-minitool.mjs", "package:minitool": "python scripts/package-minitool.py" },
   "dependencies": { "react": "^19.1.0", "react-dom": "^19.1.0", "three": "^0.180.0", "@phosphor-icons/react": "^2.1.10" },
   "devDependencies": { "vite": "^7.1.0", "@playwright/test": "^1.55.0" }
 }

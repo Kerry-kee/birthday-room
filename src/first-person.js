@@ -1,19 +1,21 @@
 import { SPAWN, movePlayer } from './walking';
+import { gamePoint } from './landscape';
 
 export function createFirstPerson(camera, canvas, { onInteract, onMode }) {
+  const offline=import.meta.env.MODE==='minitool';
   let yaw=SPAWN.yaw, pitch=SPAWN.pitch, active=false, paused=false, drag=null;
   const keys=new Set(), virtual={x:0,z:0};
-  const locked=()=>document.pointerLockElement===canvas;
+  const locked=()=>offline?false:document.pointerLockElement===canvas;
   canvas.tabIndex=0;
   canvas.setAttribute('aria-label','第一人称生日小屋。WASD 行走，拖动转头，E 互动；左右方向键转头，上下方向键前后行走。');
   function orient(){camera.rotation.set(pitch,yaw,0,'YXZ');camera.updateMatrixWorld();}
   function clear(){keys.clear();virtual.x=0;virtual.z=0;drag=null;}
   function reset(){clear();camera.position.set(SPAWN.x,SPAWN.y,SPAWN.z);yaw=SPAWN.yaw;pitch=SPAWN.pitch;orient();}
   function look(dx,dy){yaw-=dx*.0025;pitch=Math.max(-1.1,Math.min(1.05,pitch-dy*.0025));orient();}
-  function release(){if(locked())document.exitPointerLock();}
+  function release(){if(!offline&&locked())document.exitPointerLock();}
   async function enter(capture=true){
     active=true;paused=false;canvas.focus({preventScroll:true});onMode({active:true,locked:false});
-    if(capture && matchMedia('(pointer:fine)').matches && canvas.requestPointerLock){
+    if(!offline && capture && matchMedia('(pointer:fine)').matches && canvas.requestPointerLock){
       try{await canvas.requestPointerLock();}catch{onMode({active:true,locked:false});}
     }
   }
@@ -30,12 +32,12 @@ export function createFirstPerson(camera, canvas, { onInteract, onMode }) {
     if(paused||e.button!==0)return;
     if(!active){enter(false);}
     canvas.focus({preventScroll:true});
-    if(!locked()){drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0};canvas.setPointerCapture(e.pointerId);}
+    if(!locked()){drag={id:e.pointerId,...gamePoint(canvas,e),total:0};canvas.setPointerCapture(e.pointerId);}
   };
   const pointerMove=e=>{
     if(!active||paused)return;
     if(locked()){look(e.movementX,e.movementY);return;}
-    if(drag&&e.pointerId===drag.id){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.total+=Math.hypot(dx,dy);drag.x=e.clientX;drag.y=e.clientY;look(dx,dy);}
+    if(drag&&e.pointerId===drag.id){const point=gamePoint(canvas,e),dx=point.x-drag.x,dy=point.y-drag.y;drag.total+=Math.hypot(dx,dy);drag.x=point.x;drag.y=point.y;look(dx,dy);}
   };
   const pointerUp=e=>{
     if(!active||paused)return;
@@ -47,7 +49,7 @@ export function createFirstPerson(camera, canvas, { onInteract, onMode }) {
   const hidden=()=>{if(document.hidden){clear();release();}};
   const blur=()=>{clear();release();};
   window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',blur);
-  document.addEventListener('pointerlockchange',lockChange);document.addEventListener('visibilitychange',hidden);
+  if(!offline)document.addEventListener('pointerlockchange',lockChange);document.addEventListener('visibilitychange',hidden);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerCancel);
   reset();
   return {
@@ -69,6 +71,6 @@ export function createFirstPerson(camera, canvas, { onInteract, onMode }) {
       orient();
     },
     getState:()=>({x:camera.position.x,z:camera.position.z,yaw,pitch,active,paused,locked:locked()}),
-    dispose(){clear();release();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',blur);document.removeEventListener('pointerlockchange',lockChange);document.removeEventListener('visibilitychange',hidden);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);},
+    dispose(){clear();release();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',blur);if(!offline)document.removeEventListener('pointerlockchange',lockChange);document.removeEventListener('visibilitychange',hidden);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerCancel);},
   };
 }
