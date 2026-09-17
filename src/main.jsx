@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { House, Gift, SpeakerHigh, SpeakerSlash, Question, ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ArrowCounterClockwise, X, Heart, BookOpen, Plant, Camera, MusicNotes, Sparkle, Check, Plus, Mouse, Hand, Cake, Sun, Footprints } from '@phosphor-icons/react';
+import { House, Gift, SpeakerHigh, SpeakerSlash, Question, ArrowRight, ArrowCounterClockwise, X, Heart, BookOpen, Plant, Camera, MusicNotes, Sparkle, Check, Plus, Mouse, Hand, Cake, Sun, Footprints } from '@phosphor-icons/react';
 import { createRoom } from './room';
 import { createAudio } from './audio';
 import { LandscapeViewport, useRotatedLandscape } from './landscape';
+import { MovementJoystick } from './MovementJoystick';
 import { birthday, gifts } from './content';
 import { PUZZLE_STORAGE, extraObjects, clueTexts, normalizePuzzles, emptyPuzzles, attemptPuzzle, nextPuzzleHint } from './puzzles';
 import { PuzzlePanel, CluePanel } from './PuzzlePanel';
@@ -12,6 +13,7 @@ import './first-person.css';
 import './doodle.css';
 import './handwriting.css';
 import './mobile-landscape.css';
+import './joystick.css';
 
 const icons={heart:Heart,book:BookOpen,plant:Plant,camera:Camera,music:MusicNotes};
 const STORAGE=PUZZLE_STORAGE;
@@ -19,7 +21,7 @@ const offline=import.meta.env.MODE==='minitool';
 function readProgress(){try {const p=JSON.parse(localStorage.getItem(STORAGE)||'{}')||{},puzzles=normalizePuzzles(p.puzzles),found=Array.isArray(p.found)?[...new Set(p.found.filter(id=>gifts.some(g=>g.id===id)&&puzzles.solved.includes(id)))]:[];return {found,wished:found.length===5&&!!p.wished,cakeOpened:found.length===5&&!!(p.cakeOpened||p.wished),puzzles};}catch{return {found:[],wished:false,puzzles:emptyPuzzles()};}}
 
 function Dialog({children,onClose,label,className=''}) {
-  const ref=useRef(),rotated=useRotatedLandscape(),onCloseRef=useRef(onClose);onCloseRef.current=onClose;
+  const ref=useRef(),backdropPress=useRef(false),rotated=useRotatedLandscape(),onCloseRef=useRef(onClose);onCloseRef.current=onClose;
   useEffect(()=>{
     const previous=document.activeElement,dialog=ref.current;
     if(!rotated)dialog.showModal();else{dialog.setAttribute('open','');dialog.querySelector('button,input')?.focus();}
@@ -27,8 +29,8 @@ function Dialog({children,onClose,label,className=''}) {
     document.addEventListener('keydown',key);
     return ()=>{document.removeEventListener('keydown',key);dialog.close();previous?.focus?.();};
   },[rotated]);
-  return <>{rotated&&<div className="landscape-modal-backdrop" onClick={onClose}/>}
-    <dialog ref={ref} role="dialog" aria-modal="true" className={`dialog ${rotated?'landscape-modal':''} ${className}`} aria-label={label} onCancel={e=>{e.preventDefault();onClose();}} onClick={e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)onClose();}}}>
+  return <>{rotated&&<div className="landscape-modal-backdrop" onPointerDown={()=>{backdropPress.current=true;}} onClick={()=>{if(backdropPress.current)onClose();backdropPress.current=false;}}/>}
+    <dialog ref={ref} role="dialog" aria-modal="true" className={`dialog ${rotated?'landscape-modal':''} ${className}`} aria-label={label} onCancel={e=>{e.preventDefault();onClose();}} onPointerDown={e=>{backdropPress.current=e.target===e.currentTarget;}} onClick={e=>{if(backdropPress.current&&e.target===e.currentTarget){backdropPress.current=false;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)onClose();}}}>
       <button className="close-button icon-button" aria-label="关闭" onClick={onClose}><X size={20}/></button>{children}
     </dialog></>;
 }
@@ -82,8 +84,6 @@ function App(){
   function getHint(){notify(nextPuzzleHint(puzzles,found));}
   function handleAttempt(id,input){const result=attemptPuzzle(puzzles,id,input);if(result.success){setPuzzles(result.state);audio.current?.chime();}return result;}
   function restart(){audio.current?.reset();setFound([]);setWished(false);setCakeOpened(false);setRevealing(false);setLightsOn(true);revealingRef.current=false;setPuzzles(emptyPuzzles());setHint('');setModal(null);room.current?.reset();notify('已经回到门口，礼物和小机关也准备好啦。');}
-  function holdMove(e,x,z){e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);room.current?.setMove(x,z);}
-  function stopMove(){room.current?.setMove(0,0);}
   const focusName=gifts.find(g=>g.id===focus)?.place || extraObjects.find(o=>o.id===focus)?.place || ({cake:cakeOpened?'生日蛋糕':'生日惊喜礼盒',lightSwitch:lightsOn?'关灯开关':'开灯开关',cat:'熟睡的小猫'}[focus]);
   const GiftIcon=activeGift?icons[activeGift.icon]:Gift;
   const birthdayPlayer=<div className="birthday-player" role="group" aria-label="生日唱片播放控制"><MusicNotes size={25}/><span>祝你生日快乐<small>八音盒纯音乐 · 来自身旁的唱片机</small></span><button onClick={toggleSound} aria-label={sound?'暂停生日音乐':'播放生日音乐'}>{sound?'暂停':'播放'}</button></div>;
@@ -113,15 +113,13 @@ function App(){
       <h1>门开着，<br/>就等你了。</h1>
       <p>房间大了一点，秘密也多了一点。<br/>沿着线索，解开朋友们的小机关。</p>
       <button className="primary" disabled={!ready||!!error} onClick={()=>room.current?.enter()}>走进小屋 <ArrowRight size={19}/></button>
-      <div className="entry-help"><span>W A S D 行走 · 鼠标转头</span><span>手机：方向按钮行走 · 滑动转头</span></div>
+      <div className="entry-help"><span>W A S D 行走 · 鼠标转头</span><span>手机：拖动轮盘行走 · 滑动转头</span></div>
     </section>}
 
     {mode.active&&<>
       <aside className="explore-status"><span className="room-pill"><span/> 生日寻宝进行中</span><p>已解开 {puzzles.solved.length} / 5 个小机关</p></aside>
       <div className="walk-guide"><span><kbd>W A S D</kbd> 行走</span><span><Mouse size={16}/> {mode.locked?'移动鼠标转头':'按住画面拖动转头'}</span><span><kbd>E</kbd> 互动</span><span><kbd>Esc</kbd> 释放鼠标</span></div>
-      <div className="touch-controls" inert={revealing?true:undefined} aria-label="触屏行走控制">
-        {[['前进',0,1,ArrowUp],['左移',-1,0,ArrowLeft],['后退',0,-1,ArrowDown],['右移',1,0,ArrowRight]].map(([name,x,z,Icon])=><button key={name} aria-label={name} onPointerDown={e=>holdMove(e,x,z)} onPointerUp={stopMove} onPointerCancel={stopMove} onLostPointerCapture={stopMove}><Icon size={23}/></button>)}
-      </div>
+      <MovementJoystick disabled={revealing||!!modal} onMove={(x,z)=>room.current?.setMove(x,z)}/>
       <button className="touch-interact" disabled={!focus} aria-label="与面前的物品互动" onClick={()=>room.current?.interact()}><Hand size={22}/><span>互动</span></button>
     </>}
     <div className="fps-toolbar" inert={revealing?true:undefined}>
@@ -146,7 +144,7 @@ function App(){
       <h2>{opened?activeGift.name:'有一份心意，写着你的名字。'}</h2>
       {opened?<><p className="gift-message">{activeGift.message}</p><div className="gift-from">来自 {activeGift.from} 的生日祝福 <Heart size={14} weight="fill"/></div><p className="gift-detail">{activeGift.detail}</p><button className="primary" onClick={()=>{setModal(null);if(found.length===5)notify('所有心意都到齐了。再打开茶几上的礼盒，最后一个惊喜在等你。');}}>收好这份心意 <Check size={17}/></button></>:<><p>来自 {activeGift.from} · 藏在{activeGift.place}里</p><button className="primary" onClick={unwrap}>拆开礼物 <Gift size={18}/></button></>}
     </Dialog>}
-    {modal==='help'&&<Dialog label="怎么玩" onClose={()=>setModal(null)}><span className="dialog-icon"><House size={34} weight="duotone"/></span><h2>在小屋里，慢慢逛。</h2><div className="help-list"><p><Hand size={24}/><span><b>换个角度看看</b>WASD 行走，鼠标转头；Esc 释放鼠标。也可拖动画面转头，用方向键前后行走、左右转头。</span></p><p><Gift size={24}/><span><b>发现朋友的礼物</b>走近家具，用准星对准后按 E，或点击出现的小圆点。手机用方向按钮走动、滑动转头，点「互动」探索面前物品。</span></p><p><Sparkle size={24}/><span><b>找不到也没关系</b>点「一点提示」，或打开「口袋里的心意」查看线索。点回转箭头可以回到门口，礼物进度会保留。</span></p><p><Cake size={24}/><span><b>最后，许个愿吧</b>门旁的小开关可以开关室内灯光。找齐礼物后，再打开茶几上的礼盒，欣赏蛋糕出场、在月光与烛光中许愿。吹灭蜡烛后，室内灯会重新亮起。打开祝福时行走会暂停；关闭后点击画面继续。进度自动保存在当前浏览器。</span></p></div><button className="primary" onClick={()=>setModal(null)}>知道啦，去逛逛 <ArrowRight size={18}/></button></Dialog>}
+    {modal==='help'&&<Dialog label="怎么玩" onClose={()=>setModal(null)}><span className="dialog-icon"><House size={34} weight="duotone"/></span><h2>在小屋里，慢慢逛。</h2><div className="help-list"><p><Hand size={24}/><span><b>换个角度看看</b>WASD 行走，鼠标转头；Esc 释放鼠标。也可拖动画面转头，用方向键前后行走、左右转头。</span></p><p><Gift size={24}/><span><b>发现朋友的礼物</b>走近家具，用准星对准后按 E，或点击出现的小圆点。手机拖动轮盘走动，松手停下；滑动右侧画面转头，点「互动」探索面前物品。</span></p><p><Sparkle size={24}/><span><b>找不到也没关系</b>点「一点提示」，或打开「口袋里的心意」查看线索。点回转箭头可以回到门口，礼物进度会保留。</span></p><p><Cake size={24}/><span><b>最后，许个愿吧</b>门旁的小开关可以开关室内灯光。找齐礼物后，再打开茶几上的礼盒，欣赏蛋糕出场、在月光与烛光中许愿。吹灭蜡烛后，室内灯会重新亮起。打开祝福时行走会暂停；关闭后点击画面继续。进度自动保存在当前浏览器。</span></p></div><button className="primary" onClick={()=>setModal(null)}>知道啦，去逛逛 <ArrowRight size={18}/></button></Dialog>}
     {modal==='wish'&&<Dialog className="candle-wish" label="许一个生日愿望" onClose={()=>setModal(null)}><span className="dialog-icon cake-icon"><Cake size={64} weight="duotone"/></span><span className="dialog-eyebrow">五份礼物，和好多好多的喜欢</span><h2>现在，把时间留给你。</h2><p className="wish-copy">闭上眼睛，悄悄许一个愿望。<br/>不用说出来，我们也会陪它慢慢实现。</p>{birthdayPlayer}<button className="primary" onClick={()=>{setWished(true);setLightsOn(true);room.current?.celebrate();setModal('final');}}>许好啦，吹灭蜡烛 <Sparkle size={19}/></button></Dialog>}
     {modal==='final'&&<Dialog label="生日快乐" onClose={()=>setModal(null)} className="final-dialog"><div className="confetti" aria-hidden="true">{Array.from({length:24},(_,i)=><i key={i} style={{'--i':i,'--x':`${(i*43)%100}%`,'--c':['#b3c29d','#d6a485','#e6c277','#b3b9cf'][i%4]}}/>)}</div><span className="dialog-icon"><Heart size={50} weight="duotone"/></span><span className="dialog-eyebrow">HAPPY BIRTHDAY TO YOU</span><h2>{birthday.recipient}，生日快乐。</h2><p className="gift-message">{birthday.final}</p><p className="final-signature">我们一直都在。<br/><span>爱你的朋友们</span></p>{birthdayPlayer}<button className="primary" onClick={()=>setModal(null)}>再在小屋待一会儿 <House size={18}/></button></Dialog>}
     {modal==='reset'&&<Dialog label="重新探索" onClose={()=>setModal(null)}><span className="dialog-icon"><ArrowCounterClockwise size={32}/></span><h2>再收一次生日惊喜？</h2><p>这会清空当前浏览器的礼物进度。<br/>朋友们的祝福，会回到原来的地方等你。</p><div className="dialog-actions"><button className="secondary" onClick={()=>setModal(null)}>保留进度</button><button className="primary" onClick={restart}>重新开始</button></div></Dialog>}

@@ -1,0 +1,21 @@
+.movement-joystick{display:none}
+@media(pointer:coarse){
+  .immersive .movement-joystick{display:block;position:absolute;left:108px;bottom:28px;width:100px;height:100px;padding:0;border:2px solid #677454;border-radius:50%;background:#fffbeddf;box-shadow:3px 4px 0 #56624430;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;cursor:grab}
+}
+.mobile-landscape .immersive .movement-joystick{display:block;left:max(108px,calc(var(--game-safe-left,0px) + 24px));bottom:max(24px,calc(var(--game-safe-bottom,0px) + 12px));width:100px;height:100px}
+.movement-joystick>*{pointer-events:none;position:absolute}
+.joystick-ring{top:14px;right:14px;bottom:14px;left:14px;border:1px dashed #a5b18b;border-radius:50%}
+.joystick-thumb{left:calc(50% - 22px);top:calc(50% - 22px);width:44px;height:44px;border:2px solid #687653;border-radius:50%;background:#dce5c3;box-shadow:0 3px 0 #81906544;display:flex;align-items:center;justify-content:center;transition:transform .12s ease-out}
+.joystick-thumb span{width:8px;height:8px;border-radius:50%;background:#819267}
+.joystick-tick{width:6px;height:6px;border-top:1.5px solid #919d7a;border-right:1.5px solid #919d7a}
+.joystick-tick.up{left:calc(50% - 3px);top:7px;transform:rotate(-45deg)}
+.joystick-tick.right{right:7px;top:calc(50% - 3px);transform:rotate(45deg)}
+.joystick-tick.down{left:calc(50% - 3px);bottom:7px;transform:rotate(135deg)}
+.joystick-tick.left{left:7px;top:calc(50% - 3px);transform:rotate(-135deg)}
+.movement-joystick.is-active{cursor:grabbing;background:#f8f7e8}
+.movement-joystick.is-active .joystick-thumb{transition:none;background:#cbdbae}
+.movement-joystick[aria-disabled=true]{pointer-events:none;opacity:.45}
+.movement-joystick:focus-visible{outline:3px solid #b69559;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.joystick-thumb{transition:none}}
+
+.mobile-landscape .immersive .fps-toolbar{left:calc(50% + 48px)}

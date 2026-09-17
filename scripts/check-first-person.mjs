@@ -79,9 +79,9 @@ try{
  mobile.on('pageerror',e=>errors.push(e.message));await mobile.goto('http://127.0.0.1:5173/');await mobile.locator('canvas').waitFor();
  await mobile.getByRole('button',{name:'走进小屋',exact:true}).tap();await mobile.waitForTimeout(300);
  const mobilePose=async()=>JSON.parse(await mobile.locator('canvas').getAttribute('data-pose'));
- const before=await mobilePose(),forward=mobile.getByRole('button',{name:'右移',exact:true}),bounds=await forward.boundingBox();
+ const before=await mobilePose(),forward=mobile.getByRole('button',{name:/移动轮盘/}),bounds=await forward.boundingBox();
  const cdp=await mobile.context().newCDPSession(mobile);
- await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+20,y:bounds.y+20}]});await mobile.waitForTimeout(650);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.waitForTimeout(200);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+bounds.width/2+30,y:bounds.y+bounds.height/2}]});await mobile.waitForTimeout(650);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.waitForTimeout(200);
  const moved=await mobilePose();assert(Math.hypot(moved.x-before.x,moved.z-before.z)>.25,'Touch controls must move the player');
  await mobile.waitForTimeout(400);const stopped=await mobilePose();assert(Math.hypot(stopped.x-moved.x,stopped.z-moved.z)<.02,'Touch release must stop movement');
  await mobile.screenshot({path:'test-results/first-person-mobile.png'});
